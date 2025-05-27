@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRCentre - Azorean LoRaWAN Network - Coverage Tests Land-based Gateways</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map { height: 600px; width: 100%; }
+        .error { color: red; }
+        header { 
+            background-color: #1a2526; 
+            padding: 10px; 
+            color: #00c4e6; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: flex-start; 
+            gap: 10px; 
+        }
+        header img { height: 40px; }
+        header hr { 
+            width: 100%; 
+            border: 0; 
+            height: 1px; 
+            background: black; 
+            margin: 5px 0; 
+        }
+        .time-window { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: flex-start; 
+            color: white; 
+        }
+        .time-window label { 
+            font-size: 16px; 
+            margin-bottom: 5px; 
+        }
+        .time-window input { 
+            width: 300px; 
+            padding: 6px; 
+            font-size: 14px; 
+            border: 1px solid #00c4e6; 
+            border-radius: 5px; 
+            background-color: #2a3536; 
+            color: white; 
+        }
+        footer { 
+            background-color: #1a2526; 
+            padding: 20px; 
+            color: white; 
+            font-size: 14px; 
+            position: relative; 
+        }
+        .signal-quality { 
+            display: flex; 
+            justify-content: flex-end; 
+            margin-bottom: 20px; 
+        }
+        .signal-quality span { 
+            margin-left: 10px; 
+            display: flex; 
+            align-items: center; 
+        }
+        .signal-quality span::before { 
+            content: ''; 
+            width: 10px; 
+            height: 10px; 
+            margin-right: 5px; 
+            border-radius: 50%; 
+        }
+        .very-poor::before { background-color: red; }
+        .poor::before { background-color: orange; }
+        .fair::before { background-color: blue; }
+        .good::before { background-color: green; }
+        .excellent::before { background-color: lightgreen; }
+        .wgs84-note { 
+            color: #00c4e6; 
+            font-size: 12px; 
+            margin-top: 10px; 
+            text-align: right; 
+        }
+        .locations { 
+            margin-bottom: 20px; 
+        }
+        .signal-quality-scale { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 20px; 
+        }
+        .signal-quality-scale div { 
+            width: 48%; 
+        }
+        .signal-quality-scale h4 { 
+            margin: 10px 0 5px 0; 
+        }
+        .signal-quality-scale p { 
+            margin: 5px 0; 
+        }
+        .footer-input-group { 
+            display: flex; 
+            justify-content: flex-end; 
+            align-items: center; 
+            gap: 10px; 
+            margin-top: 20px; 
+            margin-bottom: 20px; 
+        }
+        .footer-input-group label { 
+            color: white; 
+            margin-right: 5px; 
+        }
+        .footer-input-group input { 
+            padding: 5px; 
+            border-radius: 3px; 
+            border: none; 
+        }
+        .footer-input-group button { 
+            padding: 5px 10px; 
+            background-color: #00c4e6; 
+            color: white; 
+            border: none; 
+            border-radius: 3px; 
+            cursor: pointer; 
+        }
+        .footer-input-group button:hover { 
+            background-color: #009bb5; 
+        }
+        .partners-section { 
+            margin-top: 20px; 
+            text-align: center; 
+        }
+        .partners-section h3 { 
+            margin-bottom: 20px; 
+        }
+        .partners-section img { 
+            width: 100%; 
+            max-width: 1800px; 
+            object-fit: contain; 
+        }
+        .contact-section { 
+            margin-top: 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: flex-start; 
+        }
+        .contact-info-wrapper { 
+            display: flex; 
+            align-items: flex-start; 
+            gap: 15px; 
+            flex: 1; 
+        }
+        .contact-info-wrapper img { 
+            height: 120px; 
+        }
+        .contact-info { 
+            display: flex; 
+            flex-direction: column; 
+        }
+        .contact-section h3 { 
+            margin-bottom: 15px; 
+        }
+        .contact-section p { 
+            margin: 5px 0; 
+        }
+        .contact-section a { 
+            color: #00c4e6; 
+            text-decoration: none; 
+        }
+        .contact-section a:hover { 
+            text-decoration: underline; 
+        }
+        .contact-section .larger-font { 
+            font-size: 16px; 
+        }
+        .contact-section .gap-one { 
+            margin-bottom: 10px; 
+        }
+        .contact-section .gap-two { 
+            margin-bottom: 20px; 
+        }
+        .contact-section .location-symbol::before { 
+            content: '\1F4CD'; 
+            margin-right: 5px; 
+        }
+        .social-buttons { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+            margin-left: 20px; 
+        }
+        .social-buttons a { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            width: 40px; 
+            height: 40px; 
+            background-color: #00c4e6; 
+            border-radius: 50%; 
+            text-decoration: none; 
+        }
+        .social-buttons a:hover { 
+            background-color: #009bb5; 
+        }
+        .social-buttons img { 
+            width: 20px; 
+            height: 20px; 
+        }
+        .vertical-line { 
+            position: relative; 
+            padding: 0 5px; 
+        }
+        .vertical-line::before, .vertical-line::after { 
+            content: ''; 
+            position: absolute; 
+            top: 0; 
+            bottom: 0; 
+            width: 1px; 
+            background: black; 
+        }
+        .vertical-line::before { 
+            left: 0; 
+        }
+        .vertical-line::after { 
+            right: 0; 
+        }
+        .map-container { 
+            position: relative; 
+        }
+        .last-updated { 
+            position: absolute; 
+            top: 10px; 
+            right: 10px; 
+            font-size: 12px; 
+            color: #333; 
+            background: rgba(255, 255, 255, 0.8); 
+            padding: 2px 5px; 
+            border-radius: 3px; 
+            z-index: 1000; 
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div style="display: flex; align-items: center;">
+            <img src="/aircentre_logo.png" alt="AIRCentre Logo">
+            <h1 style="margin-left: 10px; font-size: 20px;">
+                <span style="color: white;">AIRCentre</span> - <span style="color: skyblue;">Azorean LoRaWAN Network - Coverage Tests</span> <span class="vertical-line" style="color: white;">Land-based Gateways</span>
+            </h1>
+        </div>
+        <hr>
+        <div class="time-window">
+            <label>Time window:</label>
+            <input type="text" value="2024-04-04 - 2025-05-15" readonly>
+        </div>
+    </header>
+
+    <div class="map-container">
+        <div id="map"></div>
+        <div class="last-updated">Last updated: 2024:02:21 05:16:39</div>
+    </div>
+
+    <footer>
+        <div class="signal-quality">
+            <span class="very-poor">Very Poor</span>
+            <span class="poor">Poor</span>
+            <span class="fair">Fair</span>
+            <span class="good">Good</span>
+            <span class="excellent">Excellent</span>
+        </div>
+
+        <div class="locations">
+            <h3>Locations of Communications</h3>
+        </div>
+
+        <div class="signal-quality-scale">
+            <div>
+                <h3>LoRaWAN Signal Quality Scale</h3>
+                <h4>Very Poor Signal Quality</h4>
+                <p>• RSSI: Below -120 dBm OR</p>
+                <p>• SNR: Below -20 dB</p>
+
+                <h4>Poor Signal Quality</h4>
+                <p>• RSSI: -120 dBm to -110 dBm OR</p>
+                <p>• SNR: -20 dB to -10 dB</p>
+
+                <h4>Fair Signal Quality</h4>
+                <p>• RSSI: -110 dBm to -100 dBm OR</p>
+                <p>• SNR: -10 dB to 0 dB</p>
+            </div>
+            <div>
+                <h4>Good Signal Quality</h4>
+                <p>• RSSI: -100 dBm to -90 dBm OR</p>
+                <p>• SNR: 0 dB to 10 dB</p>
+
+                <h4>Excellent Signal Quality</h4>
+                <p>• RSSI: Above -90 dBm OR</p>
+                <p>• SNR: Above 10 dB</p>
+
+                <p style="font-style: italic; margin-top: 10px;">
+                    When the RSSI and SNR values fall into different categories on the LoRaWAN signal quality scale, the lower category is used.
+                </p>
+            </div>
+        </div>
+
+        <div class="wgs84-note">WGS84. Please use a dot, not a comma.</div>
+
+        <div class="footer-input-group">
+            <label>Latitude: <input type="text" id="latInput" value="38.6673839"></label>
+            <label>Longitude: <input type="text" id="lonInput" value="-27.2255527"></label>
+            <button onclick="lookupCoordinates()">Lookup</button>
+            <p id="error" class="error"></p>
+        </div>
+
+        <div class="partners-section">
+            <img src="/partners.png" alt="Partners Logos">
+        </div>
+
+        <div class="contact-section">
+            <div class="contact-info-wrapper">
+                <img src="/aircentre_logo.png" alt="AIRCentre Logo">
+                <div class="contact-info">
+                    <h3>Contact Information</h3>
+                    <p class="larger-font">Atlantic International Research Centre</p>
+                    <p class="larger-font">Earth Observation Lab</p>
+                    <p class="gap-one"></p>
+                    <p class="larger-font">Email: <a href="mailto:general.information@aircentre.org">general.information@aircentre.org</a></p>
+                    <p class="larger-font">Development team</p>
+                    <p class="gap-one"></p>
+                    <p class="larger-font">Phone (Lisbon): +351 217 231 062</p>
+                    <p class="larger-font">Phone (Azores): +351 295 249 400</p>
+                    <p class="gap-two"></p>
+                    <p class="larger-font location-symbol">Terinov - Parque de Ciência e Tecnologia da Ilha Terceira</p>
+                    <p class="larger-font">Sala 18, Canada de Belém, Terra Chã</p>
+                    <p class="larger-font">9700-702 Angra do Heroísmo</p>
+                    <p class="larger-font">Azores, Portugal</p>
+                    <p style="margin-top: 10px;">© Copyright 2020-2025, AIRCentre.</p>
+                </div>
+                <div class="social-buttons">
+                    <a href="https://www.youtube.com/channel/UC3Cxco668uRRHHuERVA4nRA" target="_blank">
+                        <img src="https://img.icons8.com/ios-filled/50/ffffff/youtube-play.png" alt="YouTube">
+                    </a>
+                    <a href="https://x.com/i/flow/login?redirect_after_login=%2FAIRCentre_org" target="_blank">
+                        <img src="https://img.icons8.com/ios-filled/50/ffffff/twitter.png" alt="Twitter">
+                    </a>
+                    <a href="https://aircentre.org" target="_blank">
+                        <img src="https://img.icons8.com/ios-filled/50/ffffff/globe.png" alt="AIRCentre">
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([38.655538, -27.267148], 13);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+            maxZoom: 19
+        }).addTo(map);
+
+        var markers = L.layerGroup().addTo(map);
+        var points = <% points_js %>;
+
+        function displayPoints(filteredPoints) {
+            markers.clearLayers();
+            filteredPoints.forEach(function(point) {
+                var dev_eui = point[0];
+                var gw_eui = point[1];
+                var rssi_dbm = point[2];
+                var signal_quality = point[3];
+                var distance_to_gw_km = point[4];
+                var timestamp = point[5];
+                var lat = point[6];
+                var lon = point[7];
+                var marker = L.marker([lat, lon])
+                    .addTo(markers)
+                    .bindPopup(
+                        "<b>dev_eui:</b> " + dev_eui + "<br>" +
+                        "<b>gw_eui:</b> " + gw_eui + "<br>" +
+                        "<b>rssi_dbm:</b> " + rssi_dbm + "<br>" +
+                        "<b>signal_quality:</b> " + signal_quality + "<br>" +
+                        "<b>distance_to_gw_km:</b> " + distance_to_gw_km + "<br>" +
+                        "<b>timestamp:</b> " + timestamp + "<br>" +
+                        "<b>latitude:</b> " + lat + "<br>" +
+                        "<b>longitude:</b> " + lon
+                    );
+                marker.on('click', function() { marker.openPopup(); });
+            });
+        }
+
+        function lookupCoordinates() {
+            var lat = parseFloat(document.getElementById('latInput').value);
+            var lon = parseFloat(document.getElementById('lonInput').value);
+            var error = document.getElementById('error');
+            error.textContent = '';
+
+            if (isNaN(lat) || isNaN(lon)) {
+                error.textContent = 'Please enter valid latitude and longitude values.';
+                return;
+            }
+
+            fetch('/lookup?lat=' + lat + '&lon=' + lon)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('HTTP error ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        error.textContent = data.error;
+                        return;
+                    }
+                    if (data.points.length === 0) {
+                        error.textContent = 'No matching points found within 1km.';
+                    } else {
+                        displayPoints(data.points);
+                        map.setView([lat, lon], 13);
+                    }
+                })
+                .catch(err => {
+                    error.textContent = 'Error fetching data: ' + err.message;
+                    console.error('Fetch error:', err);
+                });
+        }
+
+        // Initial display of all points
+        displayPoints(points);
+    </script>
+</body>
+</html>
