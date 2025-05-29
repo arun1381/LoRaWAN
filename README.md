@@ -8,6 +8,8 @@ Please update the paths for the following image files in the `app.jl.html` file 
 - `/aircentre_logo.png`
 - `/partners.png`
 
+
+
 Azorean LoRaWAN Coverage Test Dashboard
 This project is a replication and enhancement of the AIRCentre - Azorean LoRaWAN Network Coverage Tests application, originally visualizing LoRaWAN signal quality across land-based gateways in the Azores. It was developed using Genie.jl (a Julia web framework) to process, visualize, and interact with LoRaWAN communication data.
 
